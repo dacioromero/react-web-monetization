@@ -1,4 +1,4 @@
-import babel from 'rollup-plugin-babel'
+import ts from 'rollup-plugin-ts'
 import resolve from 'rollup-plugin-node-resolve'
 import commonjs from 'rollup-plugin-commonjs'
 
@@ -10,7 +10,7 @@ const globals = {
 const outputTo = process.env.OUTPUT_BUNDLE_TO || `${__dirname}/build`
 
 const config = {
-  input: './src/index.js',
+  input: './src/index.ts',
 
   output: [
     {
@@ -24,14 +24,7 @@ const config = {
 
   external: ['react', 'react-dom'],
 
-  plugins: [
-    babel({
-      exclude: 'node_modules/**',
-      runtimeHelpers: true
-    }),
-    resolve(),
-    commonjs()
-  ]
+  plugins: [ts(), commonjs(), resolve()]
 }
 
 if (!process.env.NO_MODULE) {

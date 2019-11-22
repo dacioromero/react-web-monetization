@@ -1,25 +1,55 @@
 import { EventEmitter } from 'events'
+import type {
+  MonetizationState,
+  MonetizationPendingEvent,
+  MonetizationStartEvent,
+  MonetizationProgressEvent
+} from 'types-wm'
+
+declare module 'types-wm' {
+  interface MonetizationProgressEventDetail {
+    receipt?: string
+  }
+}
+
+export interface FullMonetizationState {
+  state: MonetizationState | null
+  paymentPointer: string | null
+  assetCode: string | null
+  assetScale: number | null
+  requestId: string | null
+  totalAmount: number
+  receipt: string | null
+  hasPaid: boolean
+}
 
 // TODO: is there a more elegant pattern for this?
 export class GlobalWebMonetizationState extends EventEmitter {
+  state: FullMonetizationState['state'] =
+    typeof document === 'undefined'
+      ? null
+      : document.monetization?.state ?? null
+  paymentPointer: FullMonetizationState['paymentPointer'] = null
+  assetCode: FullMonetizationState['assetCode'] = null
+  assetScale: FullMonetizationState['assetScale'] = null
+  requestId: FullMonetizationState['requestId'] = null
+  totalAmount: FullMonetizationState['totalAmount'] = 0
+  receipt: FullMonetizationState['receipt'] = null
+
+  initialized = false
+
   constructor() {
     super()
-
-    this.state =
-      typeof document !== 'undefined' &&
-      document.monetization &&
-      document.monetization.state
-    this.resetState()
 
     this.initialized = false
 
     this.onMonetizationStart = this.onMonetizationStart.bind(this)
     this.onMonetizationProgress = this.onMonetizationProgress.bind(this)
-    this.onMonetizationStop = this.onMonetizationStop.bind(this)
     this.onMonetizationPending = this.onMonetizationPending.bind(this)
+    this.onMonetizationStop = this.onMonetizationStop.bind(this)
   }
 
-  resetState() {
+  resetState(): void {
     this.paymentPointer = null
     this.requestId = null
     this.assetCode = null
@@ -28,7 +58,7 @@ export class GlobalWebMonetizationState extends EventEmitter {
     this.receipt = null
   }
 
-  getState() {
+  getState(): FullMonetizationState {
     return {
       state: this.state,
       paymentPointer: this.paymentPointer,
@@ -42,9 +72,9 @@ export class GlobalWebMonetizationState extends EventEmitter {
     }
   }
 
-  init() {
+  init(): void {
     if (
-      !this.initialized &&
+      this.initialized &&
       typeof document !== 'undefined' &&
       document.monetization
     ) {
@@ -68,12 +98,8 @@ export class GlobalWebMonetizationState extends EventEmitter {
     }
   }
 
-  terminate() {
-    if (
-      this.initialized &&
-      typeof document !== 'undefined' &&
-      document.monetization
-    ) {
+  terminate(): void {
+    if (this.initialized && document?.monetization) {
       this.initialized = false
       document.monetization.removeEventListener(
         'monetizationstart',
@@ -94,8 +120,10 @@ export class GlobalWebMonetizationState extends EventEmitter {
     }
   }
 
-  onMonetizationStop() {
-    const metaTag = document.head.querySelector('meta[name="monetization"]')
+  onMonetizationStop(): void {
+    const metaTag = document.head.querySelector<HTMLMetaElement>(
+      'meta[name="monetization"]'
+    )
     if (!metaTag || metaTag.content !== this.paymentPointer) {
       this.resetState()
     }
@@ -104,14 +132,14 @@ export class GlobalWebMonetizationState extends EventEmitter {
     this.emit('monetizationstop')
   }
 
-  setStateFromDocumentMonetization() {
+  setStateFromDocumentMonetization(): void {
     this.state =
-      typeof document !== 'undefined' &&
-      document.monetization &&
-      document.monetization.state
+      typeof document === 'undefined'
+        ? null
+        : document.monetization?.state ?? null
   }
 
-  onMonetizationPending(ev) {
+  onMonetizationPending(ev: MonetizationPendingEvent): void {
     const { paymentPointer, requestId } = ev.detail
 
     if (this.requestId !== requestId) {
@@ -124,7 +152,7 @@ export class GlobalWebMonetizationState extends EventEmitter {
     this.emit('monetizationstart')
   }
 
-  onMonetizationStart(ev) {
+  onMonetizationStart(ev: MonetizationStartEvent): void {
     const { paymentPointer, requestId } = ev.detail
 
     this.setStateFromDocumentMonetization()
@@ -133,26 +161,26 @@ export class GlobalWebMonetizationState extends EventEmitter {
     this.emit('monetizationstart')
   }
 
-  onMonetizationProgress(ev) {
+  onMonetizationProgress(ev: MonetizationProgressEvent): void {
     const { amount, assetCode, assetScale, receipt } = ev.detail
 
     this.totalAmount = this.totalAmount + Number(amount)
     this.assetCode = assetCode
     this.assetScale = assetScale
-    this.receipt = receipt
+    this.receipt = receipt ?? null
     this.emit('monetizationprogress')
   }
 }
 
-let globalWebMonetizationState
+let globalWebMonetizationState: GlobalWebMonetizationState | undefined
 
-export function getGlobalWebMonetizationState() {
+export function getGlobalWebMonetizationState(): GlobalWebMonetizationState {
   if (!globalWebMonetizationState) {
     globalWebMonetizationState = new GlobalWebMonetizationState()
   }
   return globalWebMonetizationState
 }
 
-export function initGlobalWebMonetizationState() {
+export function initGlobalWebMonetizationState(): void {
   getGlobalWebMonetizationState().init()
 }

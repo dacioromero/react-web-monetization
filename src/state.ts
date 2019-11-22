@@ -1,31 +1,33 @@
 import { useState, useEffect } from 'react'
 
-import { getGlobalWebMonetizationState } from './global'
+import { getGlobalWebMonetizationState, FullMonetizationState } from './global'
 
-export function useMonetizationState() {
+export type NormalMonetizationState = Pick<
+  FullMonetizationState,
+  'state' | 'requestId' | 'paymentPointer' | 'hasPaid'
+>
+
+export function useMonetizationState(): NormalMonetizationState {
   // get the singleton WM state
   const webMonetizationState = getGlobalWebMonetizationState()
 
   webMonetizationState.init()
 
-  const {
-    state,
-    requestId,
-    paymentPointer,
-    hasPaid
-  } = webMonetizationState.getState()
+  const { state, requestId, paymentPointer, hasPaid } =
+    webMonetizationState.getState()
 
-  const [monetizationState, setMonetizationState] = useState({
-    state,
-    requestId,
-    paymentPointer,
-    hasPaid
-  })
+  const [monetizationState, setMonetizationState] =
+    useState<NormalMonetizationState>({
+      state,
+      requestId,
+      paymentPointer,
+      hasPaid
+    })
 
   useEffect(() => {
     if (!document.monetization) return
 
-    const stateChange = () => {
+    const stateChange = (): void => {
       const {
         state,
         requestId,

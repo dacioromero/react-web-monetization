@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react'
 
-import { getGlobalWebMonetizationState } from './global'
+import { getGlobalWebMonetizationState, FullMonetizationState } from './global'
 
-export function useMonetizationCounter() {
+export function useMonetizationCounter(): FullMonetizationState {
   // get the singleton WM state
   const webMonetizationState = getGlobalWebMonetizationState()
 
   webMonetizationState.init()
 
-  const [monetizationDetails, setMonetizationDetails] = useState(
-    webMonetizationState.getState()
-  )
+  const [monetizationDetails, setMonetizationDetails] =
+    useState<FullMonetizationState>(webMonetizationState.getState())
 
   // create something we can mutate
   const monetizationDetailsCopy = { ...monetizationDetails }

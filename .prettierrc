@@ -3,4 +3,6 @@ tabWidth: 2
 jsxSingleQuote: true
 bracketSpacing: true
 singleQuote: true
-
+trailingComma: none
+arrowParens: avoid
+endOfLine: auto

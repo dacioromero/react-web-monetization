@@ -1,8 +1,15 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, FC } from 'react'
 
 import { useMonetizationState } from './state'
 
-export function IfWebMonetized({ children, showOnPending }) {
+interface IfWebMonetizedProps {
+  showOnPending?: boolean
+}
+
+export const IfWebMonetized: FC<IfWebMonetizedProps> = ({
+  children,
+  showOnPending
+}) => {
   const { state } = useMonetizationState()
 
   if (state === 'started' || (state === 'pending' && showOnPending)) {
@@ -12,7 +19,14 @@ export function IfWebMonetized({ children, showOnPending }) {
   }
 }
 
-export function IfNotWebMonetized({ children, pendingTimeout = 2000 }) {
+interface IfNotWebMonetizedProps {
+  pendingTimeout?: number
+}
+
+export const IfNotWebMonetized: FC<IfNotWebMonetizedProps> = ({
+  children,
+  pendingTimeout = 2000
+}) => {
   const [pendingTimedOut, setPendingTimedOut] = useState(false)
   const { state } = useMonetizationState()
 
@@ -21,7 +35,7 @@ export function IfNotWebMonetized({ children, pendingTimeout = 2000 }) {
       setPendingTimedOut(true)
     }, pendingTimeout)
 
-    return () => {
+    return (): void => {
       clearTimeout(timer)
     }
   })
@@ -33,7 +47,7 @@ export function IfNotWebMonetized({ children, pendingTimeout = 2000 }) {
   }
 }
 
-export function IfWebMonetizationPending({ children }) {
+export const IfWebMonetizationPending: FC = ({ children }) => {
   const { state } = useMonetizationState()
 
   if (state === 'pending') {
